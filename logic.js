@@ -17,15 +17,16 @@ export function closingDecision(text) {
   }
   if (fence) return null;
   const body = q.slice(0, -1);
+  const reply = labels => ({kind:'question',description:q,labels});
   const choices = body.match(/^(?:你(?:想|希望|要|更倾向于|更喜欢)|你选|请选择[：:]?|选择[：:]?)?(.{1,35}?)[，,\s]*还是\s*(.{1,35}?)$/u)
     ?? body.match(/^(?:would you (?:prefer|like)|do you (?:prefer|want)|should (?:I|we)|which do you prefer[:,]?)\s+(.{1,35}?)\s+or\s+(.{1,35})$/i);
   if (choices) {
     const labels = choices.slice(1).map(s => s.trim().replace(/^[「“](.+)[」”]$/u, '$1'));
-    if (labels.every(s => s && !/[,:：，、。；<>\[\]]|还是|\bor\b/i.test(s)) && labels[0] !== labels[1]) return {kind:'question', labels};
+    if (labels.every(s => s && !/[,:：，、。；<>\[\]]|还是|\bor\b/i.test(s)) && labels[0] !== labels[1]) return reply(labels);
     return null;
   }
-  if (/^(?:要不要|是否(?:需要|要|继续)|需要(?:我|现在)|要(?:我|现在)|可以(?:开始|继续)|继续|现在(?:开始|执行)|你(?:想|希望|要|同意))/.test(body) && (/(?:吗|么)$/.test(body) || /^(?:要不要|是否)/.test(body))) return {kind:'question', labels:['好的','暂时不用']};
-  if (/^(?:shall (?:I|we)|should (?:I|we)|would you like (?:me |us )?to|do you want (?:me |us )?to)\b/i.test(body)) return {kind:'question', labels:['Yes','Not now']};
+  if (/^(?:要不要|是否(?:需要|要|继续)|需要(?:我|现在)|要(?:我|现在)|可以(?:开始|继续)|继续|现在(?:开始|执行)|你(?:想|希望|要|同意))/.test(body) && (/(?:吗|么)$/.test(body) || /^(?:要不要|是否)/.test(body))) return reply(['好的','暂时不用']);
+  if (/^(?:shall (?:I|we)|should (?:I|we)|would you like (?:me |us )?to|do you want (?:me |us )?to)\b/i.test(body)) return reply(['Yes','Not now']);
   return null;
 }
 

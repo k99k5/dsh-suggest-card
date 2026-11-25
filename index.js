@@ -6,7 +6,7 @@ import {fold, initial, projectionKey, taskCard, toolName} from './logic.js';
 export const inject = ['sessionProjections','tools','systemPrompt','llm','connection'];
 export const Config = Schema.object({enabled:Schema.boolean().default(true).volatile(),reviewModel:Schema.string().default('').volatile()});
 const task = z.object({kind:z.enum(['next_task','session_choice']),title:z.string(),description:z.string()});
-const question = z.object({kind:z.literal('question'),labels:z.array(z.string())});
+const question = z.object({kind:z.literal('question'),labels:z.array(z.string()),description:z.string().optional()});
 const visible = z.object({seq:z.number(),card:z.union([task,question]).nullable()}).nullable();
 
 export async function apply(ctx, config) {

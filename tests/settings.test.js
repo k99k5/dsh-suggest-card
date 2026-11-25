@@ -14,6 +14,10 @@ const end=events.at(-1),session={id:'session',header:{},isOwnSeq:()=>true,snapsh
 test('只提取本轮用户文字和最终回复',()=>{const s={turn:2,user:'',reply:''};for(const e of events)collect(s,e);assert.deepEqual(s,{turn:2,user:'请求',reply:'继续吗？'});});
 test('非所有者参与时丢弃本轮文字并停止收集',()=>{const s={turn:2,user:'owner',reply:''};collect(s,{...events[1],data:{...events[1].data,source:{kind:'user',principal:{kind:'guest'}}}});for(const e of events)collect(s,e);assert.deepEqual(s,{turn:2,user:'',reply:'',blocked:true});});
 test('总开关只采纳已确认配置',()=>{assert.ok(visibleCard({status:'ready',value:{enabled:true}}));assert.ok(!visibleCard({status:'ready',value:{enabled:false}}));assert.ok(!visibleCard({status:'loading'}));});
+test('快捷回复只展示实际末行问题，不采用模型补写的说明',()=>{
+  const raw=JSON.stringify({kind:'question',labels:['继续','不用'],description:'模型改写'});
+  assert.deepEqual(parseReview(raw,'已完成检查。\r\n继续排查吗？\n'),{kind:'question',labels:['继续','不用'],description:'继续排查吗？'});
+});
 test('无卡和问答结果校验',()=>{
   assert.equal(parseReview('{"kind":"none"}',''),null);assert.deepEqual(parseReview('{"kind":"question","labels":["继续","不用"]}','继续吗？').labels,['继续','不用']);
   assert.throws(()=>parseReview('{"kind":"question","labels":["X","Y"]}','已完成。'));

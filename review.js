@@ -15,7 +15,10 @@ function text(parts,max){const s=parts.filter(p=>p.type==='text').map(p=>p.text)
 export function parseReview(raw,reply){
   const value=JSON.parse(raw.trim().replace(/^```(?:json)?\s*\n([\s\S]*)\n```$/i,'$1'));
   if(value?.kind==='none') return null;
-  if(value?.kind==='question' && /[?？]$/.test(reply.trim()) && Array.isArray(value.labels) && value.labels.length>=2 && value.labels.length<=4 && value.labels.every(s=>typeof s==='string'&&s.trim()===s&&s.length>0&&s.length<=60&&!/[\x00-\x1f\u202a-\u202e\u2066-\u2069]/.test(s)) && new Set(value.labels).size===value.labels.length) return {kind:'question',labels:value.labels};
+  if(value?.kind==='question' && /[?？]$/.test(reply.trim()) && Array.isArray(value.labels) && value.labels.length>=2 && value.labels.length<=4 && value.labels.every(s=>typeof s==='string'&&s.trim()===s&&s.length>0&&s.length<=60&&!/[\x00-\x1f\u202a-\u202e\u2066-\u2069]/.test(s)) && new Set(value.labels).size===value.labels.length) {
+    const lastLine=reply.trimEnd().split('\n').at(-1).trim();
+    return {kind:'question',labels:value.labels,description:lastLine.length<=320?lastLine:undefined};
+  }
   const card=taskCard(value); if(!card) throw Error('invalid card');return card;
 }
 export async function check(llm,route,input,signal){

@@ -42,6 +42,9 @@ test('宿主声明的 schema 能保存并恢复实际卡片',async()=>{
   assert.equal(await tool.execute(task),true); await assert.rejects(tool.execute({...task,kind:'other'}));
   let state=projection.init();for(const event of [start,call,result,answer,end]) state=projection.stateSchema.parse(projection.apply(state,event));
   assert.deepEqual(projection.wire.viewSchema.parse(projection.wire.view(state)).card,task);
+  const {card}=projection.wire.viewSchema.parse(run(start,answer,end).visible);
+  assert.deepEqual(card,{kind:'question',labels:['好的','暂时不用'],description:'需要我继续吗？'});
+  assert.ok(projection.wire.viewSchema.safeParse({seq:6,card:{kind:'question',labels:card.labels}}).success);
 });
 test('选择检查模型时仍允许助手提议，总开关关闭后拒绝提议',async()=>{
   let enabled=true,tool,when,prompt;

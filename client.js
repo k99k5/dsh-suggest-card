@@ -132,12 +132,12 @@
   var ns = "dsh-suggest-card";
   var css = `
 .dsc-wrap{max-width:37rem;min-width:0;margin-block:16px 0;color:var(--dsw-alias-label-primary);font:inherit;font-size:var(--dsh-content-font-size,14px);overflow-wrap:anywhere}
-.dsc-card,.dsc-replies{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
+.dsc-card{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
 .dsc-card{width:100%;max-width:26rem;overflow:hidden;text-align:start;font:inherit}
 .dsc-caption{padding:4px 12px;background:var(--dsw-alias-bg-layer-1);font-weight:550;line-height:1.4}
 .dsc-body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;padding:6px 8px 6px 12px}
 .dsc-copy{display:grid;gap:2px}.dsc-title{font-weight:550;line-height:1.45}.dsc-desc{color:var(--dsw-alias-label-secondary);line-height:1.5;white-space:pre-wrap}
-.dsc-actions,.dsc-placements,.dsc-replies{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dsc-actions{padding:0 12px 6px}.dsc-placements{max-width:100%;margin-inline-start:auto;justify-content:flex-end}.dsc-actions .dsc-btn:not(.dsc-primary){background:transparent}.dsc-replies{width:fit-content;max-width:100%;padding:9px}
+.dsc-actions,.dsc-placements,.dsc-replies{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dsc-actions,.dsc-replies{padding:0 12px 6px}.dsc-placements{max-width:100%;margin-inline-start:auto;justify-content:flex-end}.dsc-actions .dsc-btn:not(.dsc-primary){background:transparent}.dsc-question{padding:6px 12px}
 .dsc-wrap button{cursor:pointer}.dsc-btn,.dsc-close{border:0;font:inherit;color:inherit}.dsc-btn{max-width:100%;padding:6px 12px;border-radius:6px;line-height:1.4;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1)}
 .dsc-btn.dsc-primary{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base)}.dsc-close{font-size:1.25em;background:transparent;line-height:1;width:28px;height:28px;border-radius:5px}
 .dsc-wrap button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.dsc-wrap button:disabled{opacity:.6;cursor:default}
@@ -145,8 +145,8 @@
 .dsc-note{color:var(--dsw-alias-label-secondary);margin-top:5px}.dsc-error{color:var(--dsw-alias-state-error-primary)}
 `;
   var dict = {
-    zh: { new: "\u65B0\u4F1A\u8BDD", here: "\u5728\u8FD9\u91CC\u505A", start: "\u5F00\u59CB", options: "\u9009\u9879", close: "\u5173\u95ED\u5EFA\u8BAE", sent: "\u5DF2\u53D1\u9001", busy: "\u6B63\u5728\u53D1\u9001\u2026", failed: "\u672A\u786E\u8BA4\u53D1\u9001\uFF0C\u8BF7\u91CD\u8BD5\uFF1A", open: "\u5728\u65B0\u4F1A\u8BDD\u4E2D\u5F00\u59CB", reply: "\u56DE\u590D\u9009\u9879", unavailable: "\u5F53\u524D\u4E0D\u53EF\u53D1\u9001" },
-    en: { new: "New session", here: "Do it here", start: "Start", options: "Options", close: "Dismiss suggestion", sent: "Sent", busy: "Sending\u2026", failed: "Delivery not confirmed. Retry: ", open: "Start in a new session", reply: "Reply options", unavailable: "Sending unavailable" }
+    zh: { new: "\u65B0\u4F1A\u8BDD", here: "\u5728\u8FD9\u91CC\u505A", start: "\u5F00\u59CB", options: "\u9009\u9879", close: "\u5173\u95ED\u5EFA\u8BAE", sent: "\u5DF2\u53D1\u9001", busy: "\u6B63\u5728\u53D1\u9001\u2026", failed: "\u672A\u786E\u8BA4\u53D1\u9001\uFF0C\u8BF7\u91CD\u8BD5\uFF1A", open: "\u5728\u65B0\u4F1A\u8BDD\u4E2D\u5F00\u59CB", reply: "\u5FEB\u6377\u56DE\u590D", replyHint: "\u8BF7\u9009\u62E9\u672C\u8F6E\u95EE\u9898\u7684\u7B54\u590D\u3002", unavailable: "\u5F53\u524D\u4E0D\u53EF\u53D1\u9001" },
+    en: { new: "New session", here: "Do it here", start: "Start", options: "Options", close: "Dismiss suggestion", sent: "Sent", busy: "Sending\u2026", failed: "Delivery not confirmed. Retry: ", open: "Start in a new session", reply: "Quick reply", replyHint: "Choose a reply to the question above.", unavailable: "Sending unavailable" }
   };
   window.__ModuleLoader__.load({ id: "@k99k5/dsh-suggest-card", factory(require2) {
     const React = require2("react"), h = React.createElement;
@@ -204,7 +204,13 @@ ${card.description}`;
         const disabled = (action, where) => busy || !!(receipt.possiblySent && receipt.action !== action) || (where === "new" ? !allowNew : !allowHere);
         const btn = (label, action, where, value, primary) => h("button", { type: "button", key: action, className: "dsc-btn" + (primary ? " dsc-primary" : ""), title: where === "new" ? t("open") : void 0, "aria-label": where === "new" ? `${label}: ${t("open")}` : void 0, disabled: disabled(action, where), onClick: () => send(where, value, action) }, label);
         let content;
-        if (card.kind === "question") content = h("div", { className: "dsc-replies", role: "group", "aria-label": t("reply") }, card.labels.map((label, i) => btn(label, String(i), "here", label, i === 0)));
+        if (card.kind === "question") content = h(
+          "div",
+          { className: "dsc-card", role: "group", "aria-label": card.description || t("reply") },
+          h("div", { className: "dsc-caption" }, t("reply")),
+          h("div", { className: "dsc-question dsc-desc" }, card.description || t("replyHint")),
+          h("div", { className: "dsc-replies" }, card.labels.map((label, i) => btn(label, String(i), "here", label, i === 0)))
+        );
         else content = h(
           "div",
           { className: "dsc-card", role: "group", "aria-label": card.title },
