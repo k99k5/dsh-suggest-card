@@ -26,6 +26,6 @@
 
 ## 发布到 npm
 
-在 GitHub 发布正式 Release，标签使用 `v` 加包版本，例如 `v0.0.1`。Actions 会校验标签、构建客户端、运行测试，并将 `@k99k5/dsh-suggest-card` 公开发布到 npm。普通推送、草稿和预发布均不发包。
+在 GitHub 发布正式 Release，标签使用 `v` 加包版本，例如 `v0.0.1`。Actions 会校验标签、构建客户端、运行测试，并把 `@k99k5/dsh-suggest-card` 提交至 npm 暂存区。维护者在 npm 的 Staged Packages 中核对并完成 2FA 审批后，新版本才可公开安装。普通推送、草稿和预发布均不发包；已发布的正式标签可通过 Actions 手动重试。
 
-首次通过 CI 发包前，在仓库的 Actions Secrets 中设置 `NPM_TOKEN`，使用短期、可写入目标作用域且允许非交互发布的 npm granular access token。首发后，可在 npm 包设置中将 `k99k5/dsh-suggest-card` 的 `release.yml` 配为 Trusted Publisher，允许 `npm publish`；配置完成后删除该 Secret 并撤销令牌。后续正式 Release 使用 GitHub OIDC，无需长期保存 npm 凭据。
+首次通过 CI 暂存前，在仓库的 Actions Secrets 中设置 `NPM_TOKEN`，使用短期、可写入目标作用域的 npm granular access token；暂存不需要绕过 2FA。首发后，可在 npm 包设置中将 `k99k5/dsh-suggest-card` 的 `release.yml` 配为 Trusted Publisher，允许 `npm stage publish`；配置完成后删除该 Secret 并撤销令牌。后续正式 Release 使用 GitHub OIDC 提交审批，无需长期保存 npm 凭据。
