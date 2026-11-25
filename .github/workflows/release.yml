@@ -10,16 +10,15 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-  id-token: write
-
 concurrency:
   group: npm-release
   cancel-in-progress: false
 
 jobs:
   publish:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ (github.event_name == 'release' && !github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -39,15 +38,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
+          node-version: '^24.11.0'
       - name: Check release tag
         run: node -e "const p = require('./package.json'); if (p.name !== '@k99k5/dsh-suggest-card' || process.env.RELEASE_TAG !== 'v' + p.version) throw Error('Release tag must match the package version')"
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test
       - run: npm pack --ignore-scripts
-      - name: Submit the tested package for npm approval
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm stage publish ./*.tgz --access public --provenance --ignore-scripts
+      - name: Publish the tested package to npm via OIDC
+        run: npm publish ./*.tgz --access public --provenance --ignore-scripts

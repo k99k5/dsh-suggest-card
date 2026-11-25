@@ -5,6 +5,13 @@
   "publishConfig": {"access":"public","registry":"https://registry.npmjs.org/"},
   "type": "module",
   "description": "Contextual task cards and decision replies for DeepSeek Harness",
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "task-cards",
+    "quick-replies",
+    "next-step-suggestions"
+  ],
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
