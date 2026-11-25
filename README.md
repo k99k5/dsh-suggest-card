@@ -42,3 +42,7 @@ npm pack --dry-run --ignore-scripts
 普通 Git 推送、草稿和预发布不会发布 npm 包。发布新的正式版本时，GitHub Release 标签必须是 `v` 加包版本，例如 `v0.0.1`。[发布工作流](.github/workflows/release.yml) 校验包名和版本、构建、测试、打包，然后用 GitHub OIDC **直接发布**该包，并附上来源证明（provenance）。已发布的正式 Release 可以从 `main` 手动重试。
 
 前提是 npm 包已将 `k99k5/dsh-suggest-card` 的 `release.yml` 配为 [Trusted Publisher](https://docs.npmjs.com/trusted-publishers/)，并允许 `npm publish`。工作流不需要长期 npm 令牌，也不经过暂存审批。
+
+## 许可证
+
+本项目采用 GNU 宽通用公共许可证第 3 版（`LGPL-3.0-only`，仅限此版本）。完整条款见 [LGPLv3](./COPYING.LESSER) 及其引用的 [GPLv3](./COPYING)。

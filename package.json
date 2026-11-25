@@ -1,6 +1,7 @@
 {
   "name": "@k99k5/dsh-suggest-card",
   "version": "0.0.1",
+  "license": "LGPL-3.0-only",
   "repository": {"type":"git","url":"git+https://github.com/k99k5/dsh-suggest-card.git"},
   "publishConfig": {"access":"public","registry":"https://registry.npmjs.org/"},
   "type": "module",
@@ -27,11 +28,13 @@
     "cordis.patch.yml",
     "locale",
     "icon.svg",
+    "COPYING",
+    "COPYING.LESSER",
     "README.md"
   ],
   "dependencies": {
     "@deepseek-ai/schemastery": "3.19.0",
-    "zod": "4.3.6"
+    "zod": "4.6.6"
   },
   "scripts": {
     "build": "esbuild client-entry.js --bundle --platform=browser --format=iife --outfile=client.js",
