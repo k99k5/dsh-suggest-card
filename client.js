@@ -148,7 +148,7 @@
     zh: { new: "\u65B0\u4F1A\u8BDD", here: "\u5728\u8FD9\u91CC\u505A", start: "\u5F00\u59CB", options: "\u9009\u9879", close: "\u5173\u95ED\u5EFA\u8BAE", sent: "\u5DF2\u53D1\u9001", busy: "\u6B63\u5728\u53D1\u9001\u2026", failed: "\u672A\u786E\u8BA4\u53D1\u9001\uFF0C\u8BF7\u91CD\u8BD5\uFF1A", open: "\u5728\u65B0\u4F1A\u8BDD\u4E2D\u5F00\u59CB", reply: "\u56DE\u590D\u9009\u9879", unavailable: "\u5F53\u524D\u4E0D\u53EF\u53D1\u9001" },
     en: { new: "New session", here: "Do it here", start: "Start", options: "Options", close: "Dismiss suggestion", sent: "Sent", busy: "Sending\u2026", failed: "Delivery not confirmed. Retry: ", open: "Start in a new session", reply: "Reply options", unavailable: "Sending unavailable" }
   };
-  window.__ModuleLoader__.load({ id: ns, factory(require2) {
+  window.__ModuleLoader__.load({ id: "@k99k5/dsh-suggest-card", factory(require2) {
     const React = require2("react"), h = React.createElement;
     return { inject: ["slots", "locale", "sessions", "uiWorkspace", "configForms"], apply(ctx) {
       const uiLocale = `${ns}.ui`;

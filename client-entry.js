@@ -21,7 +21,7 @@ const dict = {
   en:{new:'New session',here:'Do it here',start:'Start',options:'Options',close:'Dismiss suggestion',sent:'Sent',busy:'Sending…',failed:'Delivery not confirmed. Retry: ',open:'Start in a new session',reply:'Reply options',unavailable:'Sending unavailable'}
 };
 
-window.__ModuleLoader__.load({id:ns,factory(require){
+window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
   const React = require('react'), h = React.createElement;
   return {inject:['slots','locale','sessions','uiWorkspace','configForms'],apply(ctx){
     const uiLocale = `${ns}.ui`;

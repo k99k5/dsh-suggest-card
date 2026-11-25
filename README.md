@@ -23,3 +23,9 @@
 配置自动异步保存，无需点击「保存」。可以继续调整其他项或关闭设置面板；连续修改以最后选择为准。若写入失败，控件恢复宿主已确认的值并显示提示。
 
 在 DSH 插件管理中添加本地包目录，或安装打包产物。以 Desktop 0.2.2-rc.5 的服务与插槽为目标。源码工作区执行 `npm ci --ignore-scripts`、`npm run build`、`npm test`、`npm pack --pack-destination dist`。已打包版本内含浏览器入口，无需二次构建。
+
+## 发布到 npm
+
+在 GitHub 发布正式 Release，标签使用 `v` 加包版本，例如 `v0.0.1`。Actions 会校验标签、构建客户端、运行测试，并将 `@k99k5/dsh-suggest-card` 公开发布到 npm。普通推送、草稿和预发布均不发包。
+
+首次通过 CI 发包前，在仓库的 Actions Secrets 中设置 `NPM_TOKEN`，使用短期、可写入目标作用域且允许非交互发布的 npm granular access token。首发后，可在 npm 包设置中将 `k99k5/dsh-suggest-card` 的 `release.yml` 配为 Trusted Publisher，允许 `npm publish`；配置完成后删除该 Secret 并撤销令牌。后续正式 Release 使用 GitHub OIDC，无需长期保存 npm 凭据。

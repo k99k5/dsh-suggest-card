@@ -1,4 +1,4 @@
 - insert:
     - id: dsh-suggest-card
-      name: dsh-suggest-card
+      name: '@k99k5/dsh-suggest-card'
       config: {}

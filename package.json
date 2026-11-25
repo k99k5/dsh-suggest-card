@@ -1,7 +1,8 @@
 {
-  "name": "dsh-suggest-card",
+  "name": "@k99k5/dsh-suggest-card",
   "version": "0.0.1",
-  "private": true,
+  "repository": {"type":"git","url":"git+https://github.com/k99k5/dsh-suggest-card.git"},
+  "publishConfig": {"access":"public","registry":"https://registry.npmjs.org/"},
   "type": "module",
   "description": "Contextual task cards and decision replies for DeepSeek Harness",
   "exports": {
