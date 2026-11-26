@@ -8,8 +8,8 @@ const css = `
 .dsc-card{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
 .dsc-card{width:100%;max-width:26rem;overflow:hidden;text-align:start;font:inherit}
 .dsc-caption{padding:4px 12px;background:var(--dsw-alias-bg-layer-1);font-weight:550;line-height:1.4}
-.dsc-wrap:has(>.dsc-next){width:70%}
-.dsc-next{zoom:.7;width:auto;max-width:32rem;font-size:max(1rem,var(--dsh-content-font-size,1rem));box-shadow:0 2px 6px color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
+.dsc-wrap:has(>.dsc-next){width:85%}
+.dsc-next{zoom:.85;width:auto;max-width:32rem;font-size:max(1rem,var(--dsh-content-font-size,1rem));box-shadow:0 2px 6px color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
 .dsc-caption-next{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.625rem .75rem 0 1rem;background:transparent;font-size:1.0625em;font-weight:550}
 .dsc-caption-next>.dsc-close{flex:none;padding:0;font-weight:400}
 .dsc-body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;padding:6px 8px 6px 12px}
