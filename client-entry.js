@@ -1,4 +1,4 @@
-import {deliver, reviewRouteForCard, viewForTail} from './actions.js';
+import {deliver, reviewedCard, reviewRouteForCard, taskActions, viewForTail} from './actions.js';
 import {createSettings,settingsCopy,visibleCard} from './settings.js';
 
 const ns = 'dsh-suggest-card';
@@ -7,7 +7,10 @@ const css = `
 .dsc-card{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
 .dsc-card{width:100%;max-width:26rem;overflow:hidden;text-align:start;font:inherit}
 .dsc-caption{padding:4px 12px;background:var(--dsw-alias-bg-layer-1);font-weight:550;line-height:1.4}
+.dsc-caption-next{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:8px 0;padding-inline-end:8px}
+.dsc-caption-next>.dsc-close{flex:none;margin-block:-4px}
 .dsc-body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;padding:6px 8px 6px 12px}
+.dsc-caption-next+.dsc-body{display:block;padding-inline:12px}
 .dsc-copy{display:grid;gap:2px}.dsc-title{font-weight:550;line-height:1.45}.dsc-desc{color:var(--dsw-alias-label-secondary);line-height:1.5;white-space:pre-wrap}
 .dsc-actions,.dsc-placements,.dsc-replies{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dsc-actions,.dsc-replies{padding:0 12px 6px}.dsc-placements{max-width:100%;margin-inline-start:auto;justify-content:flex-end}.dsc-actions .dsc-btn:not(.dsc-primary){background:transparent}.dsc-question{padding:6px 12px}
 .dsc-wrap button{cursor:pointer}.dsc-btn,.dsc-close{border:0;font:inherit;color:inherit}.dsc-btn{max-width:100%;padding:6px 12px;border-radius:6px;line-height:1.4;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1)}
@@ -17,8 +20,8 @@ const css = `
 .dsc-note{color:var(--dsw-alias-label-secondary);margin-top:5px}.dsc-error{color:var(--dsw-alias-state-error-primary)}
 `;
 const dict = {
-  zh:{new:'新会话',here:'在这里做',start:'开始',options:'选项',close:'关闭建议',sent:'已发送',busy:'正在发送…',failed:'未确认发送，请重试：',open:'在新会话中开始',reply:'快捷回复',replyHint:'请选择本轮问题的答复。',unavailable:'当前不可发送'},
-  en:{new:'New session',here:'Do it here',start:'Start',options:'Options',close:'Dismiss suggestion',sent:'Sent',busy:'Sending…',failed:'Delivery not confirmed. Retry: ',open:'Start in a new session',reply:'Quick reply',replyHint:'Choose a reply to the question above.',unavailable:'Sending unavailable'}
+  zh:{next:'下一步建议',placement:'选择会话',here:'在这里做',new:'在新会话中开始',close:'关闭建议',sent:'已发送',busy:'正在发送…',failed:'未确认发送，请重试：',reply:'快捷回复',replyHint:'请选择本轮问题的答复。',unavailable:'当前不可发送'},
+  en:{next:'Suggested next step',placement:'Choose a session',here:'Do it here',new:'Start in a new session',close:'Dismiss suggestion',sent:'Sent',busy:'Sending…',failed:'Delivery not confirmed. Retry: ',reply:'Quick reply',replyHint:'Choose a reply to the question above.',unavailable:'Sending unavailable'}
 };
 
 window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
@@ -52,27 +55,33 @@ window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
       if(receipt.done) return h('div',{className:'dsc-wrap dsc-note',role:'status'}, t('sent'));
       const text = card.kind==='question' ? '' : `${card.title}\n\n${card.description}`;
       const disabled = (action, where) => busy || !!(receipt.possiblySent && receipt.action!==action) || (where==='new' ? !allowNew : !allowHere);
-      const btn = (label,action,where,value,primary) => h('button',{type:'button',key:action,className:'dsc-btn'+(primary?' dsc-primary':''),title:where==='new'?t('open'):undefined,'aria-label':where==='new'?`${label}: ${t('open')}`:undefined,disabled:disabled(action,where),onClick:()=>send(where,value,action)},label);
+      const btn = (label,action,where,value,primary) => h('button',{type:'button',key:action,className:'dsc-btn'+(primary?' dsc-primary':''),disabled:disabled(action,where),onClick:()=>send(where,value,action)},label);
       let content;
       if(card.kind==='question') content=h('div',{className:'dsc-card',role:'group','aria-label':card.description||t('reply')},
         h('div',{className:'dsc-caption'},t('reply')),
         h('div',{className:'dsc-question dsc-desc'},card.description||t('replyHint')),
         h('div',{className:'dsc-replies'},card.labels.map((label,i)=>btn(label,String(i),'here',label,i===0))));
-      else content=h('div',{className:'dsc-card',role:'group','aria-label':card.title},
-        h('div',{className:'dsc-caption'},t('new')),
-        h('div',{className:'dsc-body'},
-          h('div',{className:'dsc-copy'},h('span',{className:'dsc-title'},card.title),h('span',{className:'dsc-desc'},card.description)),
-          h('button',{type:'button',className:'dsc-close',disabled:busy,title:t('close'),'aria-label':t('close'),onClick:()=>remember({dismissed:true})},'×')),
-        h('div',{className:'dsc-actions'},h('span',null,t('options')),h('div',{className:'dsc-placements'},btn(t('here'),'here','here',text,false),btn(t('start'),'new','new',text,true))));
-      const denied = card.kind==='question' ? !allowHere : !allowHere&&!allowNew;
+      else {
+        const isNext=card.kind==='next_task';
+        const close=h('button',{type:'button',className:'dsc-close',disabled:busy,title:t('close'),'aria-label':t('close'),onClick:()=>remember({dismissed:true})},'×');
+        content=h('div',{className:'dsc-card',role:'group','aria-label':card.title},
+          h('div',{className:isNext?'dsc-caption dsc-caption-next':'dsc-caption'},t(isNext?'next':'placement'),isNext&&close),
+          h('div',{className:'dsc-body'},
+            h('div',{className:'dsc-copy'},h('span',{className:'dsc-title'},card.title),h('span',{className:'dsc-desc'},card.description)),
+            !isNext&&close),
+          h('div',{className:'dsc-actions'},h('div',{className:'dsc-placements'},taskActions(card.kind).map(where=>btn(t(where),where,where,text,isNext||where==='new')))));
+      }
+      const denied = !allowHere && !(card.kind==='session_choice' && allowNew);
       return h('div',{className:'dsc-wrap'},h('style',null,css),content,h('div',{role:'status',className:'dsc-note'+(error?' dsc-error':'')},error?t('failed')+error:busy?t('busy'):denied?t('unavailable'):null));
     }
-    function Reviewed({lookup,...props}){
+    function Reviewed({lookup,local,...props}){
       const [result,setResult]=React.useState(null);
       React.useEffect(()=>{const c=new AbortController();
         fetch(`api/dsh-suggest-card.result?key=${encodeURIComponent(lookup)}`,{signal:c.signal,cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(r=>{if(!c.signal.aborted)setResult(r);}).catch(()=>{if(!c.signal.aborted)setResult({error:true});});return ()=>c.abort();},[lookup]);
-      if(result?.error)return h('small',{role:'status'},t('reviewError'));
-      return result?.card?h(Card,{...props,card:result.card}):null;
+      if(!result)return null;
+      const card=reviewedCard(local,result.card);
+      if(!card && result.error)return h('small',{role:'status'},t('reviewError'));
+      return card?h(Card,{...props,card}):null;
     }
     function Tail(p){
       const settings=useSettings();
@@ -85,7 +94,7 @@ window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
       const lookup=`${p.sessionId}:${view.seq}`,route=reviewRouteForCard(view.card,settings.value.reviewModel);
       const identity=`${ns}:${lookup}:${route||'local'}`;
       const props={key:identity,identity,allowHere,allowNew:allowHere&&allowCreate&&!!(workspaceId||cwd),origin:{id:p.sessionId,options:workspaceId?{workspaceId}:{cwd}}};
-      return route?h(Reviewed,{...props,lookup}):view.card?h(Card,{...props,card:view.card}):null;
+      return route?h(Reviewed,{...props,lookup,local:view.card}):view.card?h(Card,{...props,card:view.card}):null;
     }
     ctx.slots.inject('conversation.chat.turnTail',()=>ctx.slots.register({name:'conversation.chat.turnTail',id:ns,order:-5},Tail));
   }};

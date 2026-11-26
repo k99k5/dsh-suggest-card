@@ -17,6 +17,8 @@ export function closingDecision(text) {
   }
   if (fence) return null;
   const body = q.slice(0, -1);
+  // “还是”也有“仍然”的意思，不能把原因或方法问题拆成两个答案。
+  if (/(?:为什么|为何|怎么|如何)/u.test(body.split('还是',1)[0])) return null;
   const reply = labels => ({kind:'question',description:q,labels});
   const choices = body.match(/^(?:你(?:想|希望|要|更倾向于|更喜欢)|你选|请选择[：:]?|选择[：:]?)?(.{1,35}?)[，,\s]*还是\s*(.{1,35}?)$/u)
     ?? body.match(/^(?:would you (?:prefer|like)|do you (?:prefer|want)|should (?:I|we)|which do you prefer[:,]?)\s+(.{1,35}?)\s+or\s+(.{1,35})$/i);
@@ -25,7 +27,7 @@ export function closingDecision(text) {
     if (labels.every(s => s && !/[,:：，、。；<>\[\]]|还是|\bor\b/i.test(s)) && labels[0] !== labels[1]) return reply(labels);
     return null;
   }
-  if (/^(?:要不要|是否(?:需要|要|继续)|需要(?:我|现在)|要(?:我|现在)|可以(?:开始|继续)|继续|现在(?:开始|执行)|你(?:想|希望|要|同意))/.test(body) && (/(?:吗|么)$/.test(body) || /^(?:要不要|是否)/.test(body))) return reply(['好的','暂时不用']);
+  if (/^(?:要不要|是否(?:需要|要|继续)|(?:还|也)?需要(?:我|现在|继续)|要(?:我|现在|继续)|可以(?:开始|继续)|继续|现在(?:开始|执行)|你(?:想|希望|要|同意))/.test(body) && (/(?:吗|么)$/.test(body) || /^(?:要不要|是否)/.test(body))) return reply(['好的','暂时不用']);
   if (/^(?:shall (?:I|we)|should (?:I|we)|would you like (?:me |us )?to|do you want (?:me |us )?to)\b/i.test(body)) return reply(['Yes','Not now']);
   return null;
 }
@@ -40,6 +42,21 @@ export function taskCard(value) {
 }
 
 export const initial = () => ({turn:null, pending:null, task:null, question:null, visible:null});
+// 成对选项允许在位置后写任务；单独确认另开会话时，只认明确的新建或开始动作。
+const hereZh = /^(?:继续|留)?在(?:这里|本轮|(?:当前|本次?|这个)(?:会话|对话))(?![里中]?的)|^(?:这里|本轮|(?:当前|本次?|这个)(?:会话|对话))[里中]?$/u;
+const newZh = /^(?:在|到|转到)(?:一个)?新的?(?:会话|对话)(?![里中]?的)|^(?:另开|新开|创建|开启|打开)(?:一个)?(?:新的?)?(?:会话|对话)(?![里中]?的)|^(?:新的?(?:会话|对话)|(?:另开|新开)一个)$/u;
+const hereEn = /^(?:(?:continue|start|stay|work|proceed|do (?:it|this))(?: in)? |in )?(?:here|(?:this|(?:the )?current) (?:session|chat|conversation))$/i;
+const newEn = /^(?:(?:continue|start|work|proceed|do (?:it|this))(?: in)? |(?:in|open|create|switch to) )?(?:(?:a|an) )?(?:new|separate) (?:session|chat|conversation)$/i;
+export function asksWhere(question) {
+  if (question?.kind !== 'question') return false;
+  const here = label => hereZh.test(label) || hereEn.test(label);
+  const fresh = label => newZh.test(label) || newEn.test(label);
+  const [a,b] = question.labels;
+  if ((here(a) && fresh(b)) || (fresh(a) && here(b))) return true;
+  const ask = question.description ?? '';
+  return /^(?:要不要|是否(?:需要|要)?|需要|要|你(?:想|希望|要))(?:我|我们)?(?:在新(?:的)?(?:会话|对话)[里中]?(?:开始|继续)|(?:另开|新开|创建)(?:一个)?(?:新的?)?(?:会话|对话))[吗么]?[？?]$/u.test(ask)
+    || /^(?:shall (?:I|we)|should (?:I|we)|would you like (?:me |us )?to) (?:open|create|start(?: in)?|continue in) a new (?:session|chat|conversation)\?$/i.test(ask);
+}
 export function fold(s, {type, seq, data:d}) {
   if (type === 'turn/start') return {...initial(), turn:d.turn};
   if (s.turn === null || d.turn !== s.turn) return s;
@@ -55,7 +72,8 @@ export function fold(s, {type, seq, data:d}) {
     return question || s.question ? {...s, question} : s;
   }
   if (type === 'turn/end') {
-    const card = s.task ?? s.question;
+    const routing = s.task?.kind === 'session_choice' && asksWhere(s.question);
+    const card = routing ? s.task : s.question ?? s.task;
     return {...initial(), visible:d.reason.kind === 'completed' ? {seq, card} : null};
   }
   return s;

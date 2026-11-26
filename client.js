@@ -1,10 +1,31 @@
 (() => {
+  // logic.js
+  var hereZh = /^(?:继续|留)?在(?:这里|本轮|(?:当前|本次?|这个)(?:会话|对话))(?![里中]?的)|^(?:这里|本轮|(?:当前|本次?|这个)(?:会话|对话))[里中]?$/u;
+  var newZh = /^(?:在|到|转到)(?:一个)?新的?(?:会话|对话)(?![里中]?的)|^(?:另开|新开|创建|开启|打开)(?:一个)?(?:新的?)?(?:会话|对话)(?![里中]?的)|^(?:新的?(?:会话|对话)|(?:另开|新开)一个)$/u;
+  var hereEn = /^(?:(?:continue|start|stay|work|proceed|do (?:it|this))(?: in)? |in )?(?:here|(?:this|(?:the )?current) (?:session|chat|conversation))$/i;
+  var newEn = /^(?:(?:continue|start|work|proceed|do (?:it|this))(?: in)? |(?:in|open|create|switch to) )?(?:(?:a|an) )?(?:new|separate) (?:session|chat|conversation)$/i;
+  function asksWhere(question) {
+    if (question?.kind !== "question") return false;
+    const here = (label) => hereZh.test(label) || hereEn.test(label);
+    const fresh = (label) => newZh.test(label) || newEn.test(label);
+    const [a, b] = question.labels;
+    if (here(a) && fresh(b) || fresh(a) && here(b)) return true;
+    const ask = question.description ?? "";
+    return /^(?:要不要|是否(?:需要|要)?|需要|要|你(?:想|希望|要))(?:我|我们)?(?:在新(?:的)?(?:会话|对话)[里中]?(?:开始|继续)|(?:另开|新开|创建)(?:一个)?(?:新的?)?(?:会话|对话))[吗么]?[？?]$/u.test(ask) || /^(?:shall (?:I|we)|should (?:I|we)|would you like (?:me |us )?to) (?:open|create|start(?: in)?|continue in) a new (?:session|chat|conversation)\?$/i.test(ask);
+  }
+
   // actions.js
   function viewForTail(owner, view) {
     return view && view.seq === owner.turn.end?.seq ? view : null;
   }
   function reviewRouteForCard(card, route) {
-    return card?.kind === "next_task" || card?.kind === "session_choice" ? "" : route;
+    return !card || asksWhere(card) ? route : "";
+  }
+  function reviewedCard(local, reviewed) {
+    return local && reviewed?.kind !== "session_choice" ? local : reviewed ?? local;
+  }
+  function taskActions(kind) {
+    return kind === "session_choice" ? ["here", "new"] : ["here"];
   }
   async function deliver(ctx, attempt, placement, text, origin, remember) {
     if (!attempt.target) {
@@ -135,7 +156,10 @@
 .dsc-card{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
 .dsc-card{width:100%;max-width:26rem;overflow:hidden;text-align:start;font:inherit}
 .dsc-caption{padding:4px 12px;background:var(--dsw-alias-bg-layer-1);font-weight:550;line-height:1.4}
+.dsc-caption-next{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:8px 0;padding-inline-end:8px}
+.dsc-caption-next>.dsc-close{flex:none;margin-block:-4px}
 .dsc-body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;padding:6px 8px 6px 12px}
+.dsc-caption-next+.dsc-body{display:block;padding-inline:12px}
 .dsc-copy{display:grid;gap:2px}.dsc-title{font-weight:550;line-height:1.45}.dsc-desc{color:var(--dsw-alias-label-secondary);line-height:1.5;white-space:pre-wrap}
 .dsc-actions,.dsc-placements,.dsc-replies{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dsc-actions,.dsc-replies{padding:0 12px 6px}.dsc-placements{max-width:100%;margin-inline-start:auto;justify-content:flex-end}.dsc-actions .dsc-btn:not(.dsc-primary){background:transparent}.dsc-question{padding:6px 12px}
 .dsc-wrap button{cursor:pointer}.dsc-btn,.dsc-close{border:0;font:inherit;color:inherit}.dsc-btn{max-width:100%;padding:6px 12px;border-radius:6px;line-height:1.4;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1)}
@@ -145,8 +169,8 @@
 .dsc-note{color:var(--dsw-alias-label-secondary);margin-top:5px}.dsc-error{color:var(--dsw-alias-state-error-primary)}
 `;
   var dict = {
-    zh: { new: "\u65B0\u4F1A\u8BDD", here: "\u5728\u8FD9\u91CC\u505A", start: "\u5F00\u59CB", options: "\u9009\u9879", close: "\u5173\u95ED\u5EFA\u8BAE", sent: "\u5DF2\u53D1\u9001", busy: "\u6B63\u5728\u53D1\u9001\u2026", failed: "\u672A\u786E\u8BA4\u53D1\u9001\uFF0C\u8BF7\u91CD\u8BD5\uFF1A", open: "\u5728\u65B0\u4F1A\u8BDD\u4E2D\u5F00\u59CB", reply: "\u5FEB\u6377\u56DE\u590D", replyHint: "\u8BF7\u9009\u62E9\u672C\u8F6E\u95EE\u9898\u7684\u7B54\u590D\u3002", unavailable: "\u5F53\u524D\u4E0D\u53EF\u53D1\u9001" },
-    en: { new: "New session", here: "Do it here", start: "Start", options: "Options", close: "Dismiss suggestion", sent: "Sent", busy: "Sending\u2026", failed: "Delivery not confirmed. Retry: ", open: "Start in a new session", reply: "Quick reply", replyHint: "Choose a reply to the question above.", unavailable: "Sending unavailable" }
+    zh: { next: "\u4E0B\u4E00\u6B65\u5EFA\u8BAE", placement: "\u9009\u62E9\u4F1A\u8BDD", here: "\u5728\u8FD9\u91CC\u505A", new: "\u5728\u65B0\u4F1A\u8BDD\u4E2D\u5F00\u59CB", close: "\u5173\u95ED\u5EFA\u8BAE", sent: "\u5DF2\u53D1\u9001", busy: "\u6B63\u5728\u53D1\u9001\u2026", failed: "\u672A\u786E\u8BA4\u53D1\u9001\uFF0C\u8BF7\u91CD\u8BD5\uFF1A", reply: "\u5FEB\u6377\u56DE\u590D", replyHint: "\u8BF7\u9009\u62E9\u672C\u8F6E\u95EE\u9898\u7684\u7B54\u590D\u3002", unavailable: "\u5F53\u524D\u4E0D\u53EF\u53D1\u9001" },
+    en: { next: "Suggested next step", placement: "Choose a session", here: "Do it here", new: "Start in a new session", close: "Dismiss suggestion", sent: "Sent", busy: "Sending\u2026", failed: "Delivery not confirmed. Retry: ", reply: "Quick reply", replyHint: "Choose a reply to the question above.", unavailable: "Sending unavailable" }
   };
   window.__ModuleLoader__.load({ id: "@k99k5/dsh-suggest-card", factory(require2) {
     const React = require2("react"), h = React.createElement;
@@ -202,7 +226,7 @@
 
 ${card.description}`;
         const disabled = (action, where) => busy || !!(receipt.possiblySent && receipt.action !== action) || (where === "new" ? !allowNew : !allowHere);
-        const btn = (label, action, where, value, primary) => h("button", { type: "button", key: action, className: "dsc-btn" + (primary ? " dsc-primary" : ""), title: where === "new" ? t("open") : void 0, "aria-label": where === "new" ? `${label}: ${t("open")}` : void 0, disabled: disabled(action, where), onClick: () => send(where, value, action) }, label);
+        const btn = (label, action, where, value, primary) => h("button", { type: "button", key: action, className: "dsc-btn" + (primary ? " dsc-primary" : ""), disabled: disabled(action, where), onClick: () => send(where, value, action) }, label);
         let content;
         if (card.kind === "question") content = h(
           "div",
@@ -211,22 +235,26 @@ ${card.description}`;
           h("div", { className: "dsc-question dsc-desc" }, card.description || t("replyHint")),
           h("div", { className: "dsc-replies" }, card.labels.map((label, i) => btn(label, String(i), "here", label, i === 0)))
         );
-        else content = h(
-          "div",
-          { className: "dsc-card", role: "group", "aria-label": card.title },
-          h("div", { className: "dsc-caption" }, t("new")),
-          h(
+        else {
+          const isNext = card.kind === "next_task";
+          const close = h("button", { type: "button", className: "dsc-close", disabled: busy, title: t("close"), "aria-label": t("close"), onClick: () => remember({ dismissed: true }) }, "\xD7");
+          content = h(
             "div",
-            { className: "dsc-body" },
-            h("div", { className: "dsc-copy" }, h("span", { className: "dsc-title" }, card.title), h("span", { className: "dsc-desc" }, card.description)),
-            h("button", { type: "button", className: "dsc-close", disabled: busy, title: t("close"), "aria-label": t("close"), onClick: () => remember({ dismissed: true }) }, "\xD7")
-          ),
-          h("div", { className: "dsc-actions" }, h("span", null, t("options")), h("div", { className: "dsc-placements" }, btn(t("here"), "here", "here", text, false), btn(t("start"), "new", "new", text, true)))
-        );
-        const denied = card.kind === "question" ? !allowHere : !allowHere && !allowNew;
+            { className: "dsc-card", role: "group", "aria-label": card.title },
+            h("div", { className: isNext ? "dsc-caption dsc-caption-next" : "dsc-caption" }, t(isNext ? "next" : "placement"), isNext && close),
+            h(
+              "div",
+              { className: "dsc-body" },
+              h("div", { className: "dsc-copy" }, h("span", { className: "dsc-title" }, card.title), h("span", { className: "dsc-desc" }, card.description)),
+              !isNext && close
+            ),
+            h("div", { className: "dsc-actions" }, h("div", { className: "dsc-placements" }, taskActions(card.kind).map((where) => btn(t(where), where, where, text, isNext || where === "new"))))
+          );
+        }
+        const denied = !allowHere && !(card.kind === "session_choice" && allowNew);
         return h("div", { className: "dsc-wrap" }, h("style", null, css), content, h("div", { role: "status", className: "dsc-note" + (error ? " dsc-error" : "") }, error ? t("failed") + error : busy ? t("busy") : denied ? t("unavailable") : null));
       }
-      function Reviewed({ lookup, ...props }) {
+      function Reviewed({ lookup, local, ...props }) {
         const [result, setResult] = React.useState(null);
         React.useEffect(() => {
           const c = new AbortController();
@@ -240,8 +268,10 @@ ${card.description}`;
           });
           return () => c.abort();
         }, [lookup]);
-        if (result?.error) return h("small", { role: "status" }, t("reviewError"));
-        return result?.card ? h(Card, { ...props, card: result.card }) : null;
+        if (!result) return null;
+        const card = reviewedCard(local, result.card);
+        if (!card && result.error) return h("small", { role: "status" }, t("reviewError"));
+        return card ? h(Card, { ...props, card }) : null;
       }
       function Tail(p) {
         const settings = useSettings();
@@ -254,7 +284,7 @@ ${card.description}`;
         const lookup = `${p.sessionId}:${view.seq}`, route = reviewRouteForCard(view.card, settings.value.reviewModel);
         const identity = `${ns}:${lookup}:${route || "local"}`;
         const props = { key: identity, identity, allowHere, allowNew: allowHere && allowCreate && !!(workspaceId || cwd), origin: { id: p.sessionId, options: workspaceId ? { workspaceId } : { cwd } } };
-        return route ? h(Reviewed, { ...props, lookup }) : view.card ? h(Card, { ...props, card: view.card }) : null;
+        return route ? h(Reviewed, { ...props, lookup, local: view.card }) : view.card ? h(Card, { ...props, card: view.card }) : null;
       }
       ctx.slots.inject("conversation.chat.turnTail", () => ctx.slots.register({ name: "conversation.chat.turnTail", id: ns, order: -5 }, Tail));
     } };

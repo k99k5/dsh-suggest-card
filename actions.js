@@ -1,10 +1,21 @@
+import {asksWhere} from './logic.js';
+
 export function viewForTail(owner, view) {
   return view && view.seq === owner.turn.end?.seq ? view : null;
 }
 
 // This selects what to display; the Host schedules the review independently.
 export function reviewRouteForCard(card, route) {
-  return card?.kind === 'next_task' || card?.kind === 'session_choice' ? '' : route;
+  return !card || asksWhere(card) ? route : '';
+}
+
+// Without a task payload, answering a placement question must not create a session.
+export function reviewedCard(local, reviewed) {
+  return local && reviewed?.kind !== 'session_choice' ? local : reviewed ?? local;
+}
+
+export function taskActions(kind) {
+  return kind === 'session_choice' ? ['here','new'] : ['here'];
 }
 
 // The target and request id survive a failed acknowledgement. A retry must not
