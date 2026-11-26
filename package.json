@@ -1,6 +1,6 @@
 {
   "name": "@k99k5/dsh-suggest-card",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "LGPL-3.0-only",
   "repository": {"type":"git","url":"git+https://github.com/k99k5/dsh-suggest-card.git"},
   "publishConfig": {"access":"public","registry":"https://registry.npmjs.org/"},
@@ -30,6 +30,7 @@
     "icon.svg",
     "COPYING",
     "COPYING.LESSER",
+    "THIRD-PARTY-NOTICES.txt",
     "README.md"
   ],
   "dependencies": {
@@ -56,6 +57,7 @@
     }
   },
   "devDependencies": {
-    "esbuild": "^0.25.12"
+    "esbuild": "^0.25.12",
+    "markdown-it": "15.0.3"
   }
 }

@@ -1,5 +1,6 @@
 import {deliver, reviewedCard, reviewRouteForCard, taskActions, viewForTail} from './actions.js';
 import {createSettings,settingsCopy,visibleCard} from './settings.js';
+import {cardMarkdown} from './card-markdown.js';
 
 const ns = 'dsh-suggest-card';
 const css = `
@@ -7,14 +8,24 @@ const css = `
 .dsc-card{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);border-radius:8px;color:inherit}
 .dsc-card{width:100%;max-width:26rem;overflow:hidden;text-align:start;font:inherit}
 .dsc-caption{padding:4px 12px;background:var(--dsw-alias-bg-layer-1);font-weight:550;line-height:1.4}
-.dsc-caption-next{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:8px 0;padding-inline-end:8px}
-.dsc-caption-next>.dsc-close{flex:none;margin-block:-4px}
+.dsc-wrap:has(>.dsc-next){width:70%}
+.dsc-next{zoom:.7;width:auto;max-width:32rem;font-size:max(1rem,var(--dsh-content-font-size,1rem));box-shadow:0 2px 6px color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
+.dsc-caption-next{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.625rem .75rem 0 1rem;background:transparent;font-size:1.0625em;font-weight:550}
+.dsc-caption-next>.dsc-close{flex:none;padding:0;font-weight:400}
 .dsc-body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;padding:6px 8px 6px 12px}
-.dsc-caption-next+.dsc-body{display:block;padding-inline:12px}
+.dsc-next .dsc-body{display:block;padding:.625rem 1rem 0}
 .dsc-copy{display:grid;gap:2px}.dsc-title{font-weight:550;line-height:1.45}.dsc-desc{color:var(--dsw-alias-label-secondary);line-height:1.5;white-space:pre-wrap}
+.dsc-next .dsc-copy{gap:.375rem}.dsc-next .dsc-title{font-weight:600}
+.dsc-md{min-width:0;white-space:normal;overflow-wrap:anywhere}.dsc-md :where(p,ul,ol,li,pre,blockquote,h1,h2,h3,h4,h5,h6){margin:0}
+.dsc-md :where(p,ul,ol,pre,blockquote,h1,h2,h3,h4,h5,h6)+:where(p,ul,ol,pre,blockquote,h1,h2,h3,h4,h5,h6){margin-block-start:.375em}
+.dsc-md :where(h1,h2,h3,h4,h5,h6){font:inherit;font-weight:600}.dsc-md :where(ul,ol){padding-inline-start:1.4em}.dsc-md ul{list-style:disc}.dsc-md ol{list-style:decimal}
+.dsc-md blockquote{padding-inline-start:.75em;border-inline-start:2px solid var(--dsw-alias-border-l1)}
+.dsc-md code{padding:.08em .35em;border-radius:.25em;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-family:ui-monospace,monospace;font-size:.94em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.dsc-md pre{padding:.5em .75em;border-radius:.375rem;background:var(--dsw-alias-bg-layer-1);white-space:pre-wrap;overflow-wrap:anywhere}.dsc-md pre code{padding:0;background:none}.dsc-md pre small{display:block}.dsc-raw{white-space:pre-wrap}
 .dsc-actions,.dsc-placements,.dsc-replies{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dsc-actions,.dsc-replies{padding:0 12px 6px}.dsc-placements{max-width:100%;margin-inline-start:auto;justify-content:flex-end}.dsc-actions .dsc-btn:not(.dsc-primary){background:transparent}.dsc-question{padding:6px 12px}
 .dsc-wrap button{cursor:pointer}.dsc-btn,.dsc-close{border:0;font:inherit;color:inherit}.dsc-btn{max-width:100%;padding:6px 12px;border-radius:6px;line-height:1.4;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1)}
 .dsc-btn.dsc-primary{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base)}.dsc-close{font-size:1.25em;background:transparent;line-height:1;width:28px;height:28px;border-radius:5px}
+.dsc-next .dsc-actions{padding:.75rem 1rem .875rem}.dsc-next .dsc-primary{padding:.4em 1em;font-weight:550}
 .dsc-wrap button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.dsc-wrap button:disabled{opacity:.6;cursor:default}
 @media(hover:hover){.dsc-close:hover:not(:disabled),.dsc-btn:not(.dsc-primary):hover:not(:disabled){background:var(--dsw-alias-bg-layer-2)}.dsc-primary:hover:not(:disabled){opacity:.85}}
 .dsc-note{color:var(--dsw-alias-label-secondary);margin-top:5px}.dsc-error{color:var(--dsw-alias-state-error-primary)}
@@ -31,6 +42,11 @@ window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
     ctx.effect(()=>ctx.locale.register(uiLocale,{zh:{...dict.zh,...settingsCopy.zh},en:{...dict.en,...settingsCopy.en}}));
     const t = ctx.locale.bind(uiLocale);
     const {Page,useSettings}=createSettings(React,ctx.configForms.get(ns),t);
+    const TaskCopy=React.memo(function TaskCopy({title,description}){
+      return h('div',{className:'dsc-copy'},
+        h('div',{className:'dsc-title dsc-md',dangerouslySetInnerHTML:{__html:cardMarkdown(title,true)}}),
+        h('div',{className:'dsc-desc dsc-md',dangerouslySetInnerHTML:{__html:cardMarkdown(description)}}));
+    });
     ctx.slots.inject('settings.section',()=>ctx.slots.register({name:'settings.section',id:ns,order:95,label:()=>t('page'),locale:uiLocale},Page));
     // Only opaque routing receipts are stored, never task text or replies.
     const memory = new Map(), locks = new Set();
@@ -64,10 +80,10 @@ window.__ModuleLoader__.load({id:'@k99k5/dsh-suggest-card',factory(require){
       else {
         const isNext=card.kind==='next_task';
         const close=h('button',{type:'button',className:'dsc-close',disabled:busy,title:t('close'),'aria-label':t('close'),onClick:()=>remember({dismissed:true})},'×');
-        content=h('div',{className:'dsc-card',role:'group','aria-label':card.title},
+        content=h('div',{className:isNext?'dsc-card dsc-next':'dsc-card',role:'group','aria-label':card.title},
           h('div',{className:isNext?'dsc-caption dsc-caption-next':'dsc-caption'},t(isNext?'next':'placement'),isNext&&close),
           h('div',{className:'dsc-body'},
-            h('div',{className:'dsc-copy'},h('span',{className:'dsc-title'},card.title),h('span',{className:'dsc-desc'},card.description)),
+            h(TaskCopy,{title:card.title,description:card.description}),
             !isNext&&close),
           h('div',{className:'dsc-actions'},h('div',{className:'dsc-placements'},taskActions(card.kind).map(where=>btn(t(where),where,where,text,isNext||where==='new')))));
       }
