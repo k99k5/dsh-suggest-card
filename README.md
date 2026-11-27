@@ -2,7 +2,13 @@
 
 [![npm](https://img.shields.io/npm/v/%40k99k5%2Fdsh-suggest-card)](https://www.npmjs.com/package/@k99k5/dsh-suggest-card) · [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 
-**在当前会话回答追问、接受下一步建议。** 只有需要决定任务在哪个会话执行时，才显示新会话操作。默认不额外调用模型。
+**在当前会话用快捷按钮回答追问，或点击卡片接受下一步建议。** 建议卡片的交互类似 Claude Code Desktop 的「下一步建议」。只有需要决定任务在哪个会话执行时，才显示「在新会话中开始」。默认不额外调用模型。
+
+## 界面预览
+
+![下一步建议卡片，提供「在这里做」按钮](./assets/1.jpg)
+
+![选择会话卡片，提供「在这里做」和「在新会话中开始」按钮](./assets/2.jpg)
 
 ## 安装
 
